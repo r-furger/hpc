@@ -44,14 +44,29 @@ int main()
 {
         double * d_in;
         double * d_out;
+        // Memory allocation at host sid
         double * h_in = (double *)malloc(sizeof(double)*DATASIZE);
         double * h_out= (double *)malloc(sizeof(double)*DATASIZE);
+        // CHANGE: Memory allocation at device side
+        cudaMalloc(&d_in,sizeof(double)* DATASIZE);
+        cudaMalloc(&d_out,sizeof(double)* DATASIZE);
+        
+        // create random 1d array
         init(h_in,DATASIZE);
+        // copy from host to device (GPU) init data
         cudaMemcpy(d_in,h_in,DATASIZE,cudaMemcpyHostToDevice);
+        // kernel
         get_average<<<1,DATASIZE>>>(d_in,d_out,DATASIZE*sizeof(double));
-        cudaMemcpy(h_out,d_out,sizeof(double)*DATASIZE,cudaMemcpyHostToDevice);
+        // CHANGE: copy resulting data from device to host
+        //cudaMemcpy(h_out,d_out,sizeof(double)*DATASIZE,cudaMemcpyHostToDevice);
+        cudaMemcpy(h_out,d_out,sizeof(double)*DATASIZE,cudaMemcpyDeviceToHost);
+        
         check(h_in,h_out,DATASIZE);
+        
+        // Free device, host memory
         cudaFree(d_in);
+        // CHANGE:
+        cudaFree(d_out);
         free(h_in);
         free(h_out);
 }
